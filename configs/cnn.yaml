@@ -1,0 +1,19 @@
+experiment_name: sleep-eeg
+run_name: cnn-baseline
+
+data:
+  processed_dir: data/processed
+
+model:
+  name: SleepCNN
+  n_classes: 5
+  dropout: 0.5
+
+training:
+  epochs: 100
+  batch_size: 64
+  lr: 0.001
+  weight_decay: 0.0001
+  patience: 10           # early stopping — stop if val macro-F1 doesn't improve
+  num_workers: 4
+  checkpoint_dir: checkpoints/cnn
