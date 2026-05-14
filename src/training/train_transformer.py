@@ -41,7 +41,7 @@ def train(cfg: dict) -> None:
     device = get_device()
     log.info(f"Using device: {device}")
 
-    # --- Data ---
+    # Data
     loaders = make_sequence_dataloaders(
         cfg["data"]["processed_dir"],
         batch_size=cfg["training"]["batch_size"],
@@ -52,7 +52,7 @@ def train(cfg: dict) -> None:
 
     class_weights = loaders["train"].dataset.class_weights().to(device)
 
-    # --- Model ---
+    # Model
     model = SleepTransformer(
         cnn_checkpoint=cfg["model"].get("cnn_checkpoint"),
         freeze_cnn=cfg["model"].get("freeze_cnn", False),
@@ -64,7 +64,7 @@ def train(cfg: dict) -> None:
         n_classes=cfg["model"]["n_classes"],
     ).to(device)
 
-    # --- Loss / optimiser ---
+    # Loss / optimiser
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimiser = AdamW(
         model.parameters(),
@@ -73,7 +73,7 @@ def train(cfg: dict) -> None:
     )
     scheduler = CosineAnnealingLR(optimiser, T_max=cfg["training"]["epochs"])
 
-    # --- MLflow ---
+    # MLflow
     mlflow.set_experiment(cfg.get("experiment_name", "sleep-eeg"))
     with mlflow.start_run(run_name=cfg.get("run_name", "transformer")):
         mlflow.log_params({
@@ -92,7 +92,7 @@ def train(cfg: dict) -> None:
         ckpt_path.parent.mkdir(parents=True, exist_ok=True)
 
         for epoch in range(1, cfg["training"]["epochs"] + 1):
-            # --- Train ---
+            # Train
             model.train()
             total_loss = 0.0
             for X, y in loaders["train"]:
@@ -113,7 +113,7 @@ def train(cfg: dict) -> None:
             scheduler.step()
             avg_train_loss = total_loss / len(loaders["train"])
 
-            # --- Validate ---
+            # Validate
             model.eval()
             all_preds, all_labels = [], []
             val_loss = 0.0

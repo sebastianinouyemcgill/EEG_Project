@@ -23,15 +23,9 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 log = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def load_config(path: str) -> dict:
     with open(path) as f:
         return yaml.safe_load(f)
-
 
 def get_device() -> torch.device:
     if torch.cuda.is_available():
@@ -39,11 +33,6 @@ def get_device() -> torch.device:
     if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
-
-
-# ---------------------------------------------------------------------------
-# Main training function
-# ---------------------------------------------------------------------------
 
 def train(cfg: dict) -> None:
     import mlflow
@@ -55,7 +44,7 @@ def train(cfg: dict) -> None:
     device = get_device()
     log.info(f"Using device: {device}")
 
-    # --- Data ---
+    # Data
     loaders = make_dataloaders(
         cfg["data"]["processed_dir"],
         batch_size=cfg["training"]["batch_size"],
@@ -67,13 +56,13 @@ def train(cfg: dict) -> None:
     # Class weights from training set
     class_weights = train_loader.dataset.class_weights().to(device)
 
-    # --- Model ---
+    # Model
     model = SleepCNN(
         n_classes=cfg["model"]["n_classes"],
         dropout=cfg["model"]["dropout"],
     ).to(device)
 
-    # --- Loss / optimiser / scheduler ---
+    # Loss / optimiser / scheduler
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimiser = AdamW(
         model.parameters(),
@@ -85,7 +74,7 @@ def train(cfg: dict) -> None:
         T_max=cfg["training"]["epochs"],
     )
 
-    # --- MLflow ---
+    # MLflow
     mlflow.set_experiment(cfg.get("experiment_name", "sleep-eeg"))
     with mlflow.start_run(run_name=cfg.get("run_name", "cnn-baseline")):
         mlflow.log_params({
@@ -103,7 +92,7 @@ def train(cfg: dict) -> None:
         ckpt_path.parent.mkdir(parents=True, exist_ok=True)
 
         for epoch in range(1, cfg["training"]["epochs"] + 1):
-            # --- Train ---
+            # Train
             model.train()
             total_loss = 0.0
             for X, y in train_loader:
@@ -117,7 +106,7 @@ def train(cfg: dict) -> None:
             scheduler.step()
             avg_train_loss = total_loss / len(train_loader)
 
-            # --- Validate ---
+            # Validate
             model.eval()
             all_preds, all_labels = [], []
             val_loss = 0.0
@@ -145,7 +134,7 @@ def train(cfg: dict) -> None:
                 f"macro_f1={macro_f1:.4f}"
             )
 
-            # --- Early stopping ---
+            # Early stopping
             if macro_f1 > best_f1:
                 best_f1 = macro_f1
                 no_improve = 0
@@ -161,10 +150,6 @@ def train(cfg: dict) -> None:
         mlflow.log_metric("best_val_macro_f1", best_f1)
         log.info(f"Training complete. Best macro F1: {best_f1:.4f}")
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     logging.basicConfig(

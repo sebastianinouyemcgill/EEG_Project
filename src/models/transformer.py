@@ -69,7 +69,7 @@ class SleepTransformer(nn.Module):
     ) -> None:
         super().__init__()
 
-        # ── CNN epoch encoder ──────────────────────────────────────────────
+        # CNN epoch encoder
         self.cnn = SleepCNN(n_classes=n_classes, dropout=0.0)
         if cnn_checkpoint:
             state = torch.load(cnn_checkpoint, map_location="cpu", weights_only=True)
@@ -79,10 +79,10 @@ class SleepTransformer(nn.Module):
             for p in self.cnn.parameters():
                 p.requires_grad = False
 
-        # ── Positional encoding ────────────────────────────────────────────
+        # Positional encoding
         self.pos_enc = PositionalEncoding(d_model, dropout=dropout)
 
-        # ── Transformer encoder ────────────────────────────────────────────
+        # Transformer encoder
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=n_heads,
@@ -93,7 +93,7 @@ class SleepTransformer(nn.Module):
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
 
-        # ── Per-epoch classifier head ──────────────────────────────────────
+        # Per-epoch classifier head
         self.classifier = nn.Sequential(
             nn.LayerNorm(d_model),
             nn.Linear(d_model, n_classes),

@@ -6,7 +6,7 @@ epochs so the Transformer can learn temporal context (sleep cycles).
 
 Each item: (X, y) where
   X: (seq_len, 1, 3000)  — sequence of raw EEG epochs
-  y: (seq_len,)           — label for each epoch in the sequence
+  y: (seq_len,)          — label for each epoch in the sequence
 """
 
 from pathlib import Path

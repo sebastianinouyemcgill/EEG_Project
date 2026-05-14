@@ -2,7 +2,7 @@
 Preprocessing pipeline: raw EDF recordings → clean .npy epoch arrays.
 
 Steps:
-  1. Bandpass filter (0.5–35 Hz)
+  1. Bandpass filter (0.5-35 Hz)
   2. Slice into 30-second epochs
   3. Z-score normalise per recording
   4. Map AASM annotations → integer labels
@@ -81,7 +81,7 @@ def preprocess_dataset(raw_dir: str | Path, out_dir: str | Path) -> None:
             raw, event_id=LABEL_MAP, verbose=False
         )
 
-        # --- Epoch ---
+        # Epoch
         epochs = mne.Epochs(
             raw,
             events,
@@ -96,7 +96,7 @@ def preprocess_dataset(raw_dir: str | Path, out_dir: str | Path) -> None:
         X = epochs.get_data(units="uV").squeeze(1).astype(np.float32)  # (N, 3000)
         y = epochs.events[:, -1].astype(np.int64)                       # (N,)
 
-        # --- Per-recording z-score normalisation ---
+        # Per-recording z-score normalisation
         mean = X.mean(axis=(0, 1), keepdims=True)
         std  = X.std(axis=(0, 1), keepdims=True) + 1e-8
         X    = (X - mean) / std

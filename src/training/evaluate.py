@@ -126,18 +126,18 @@ def evaluate(cfg: dict) -> None:
     y_true = np.array(all_labels)
     y_pred = np.array(all_preds)
 
-    # --- Report ---
+    # Report
     report = classification_report(y_true, y_pred, target_names=LABEL_NAMES, zero_division=0)
     print("\n" + "=" * 50)
     print("Classification Report — Test Set")
     print("=" * 50)
     print(report)
 
-    # --- Confusion matrix ---
+    # Confusion matrix
     cm = confusion_matrix(y_true, y_pred)
     plot_confusion_matrix(cm, out_dir / "confusion_matrix.png")
 
-    # --- Hypnogram ---
+    # Hypnogram
     plot_hypnogram(y_true, y_pred, out_dir / "hypnogram.png")
 
 

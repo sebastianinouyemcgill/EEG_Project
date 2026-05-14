@@ -7,11 +7,11 @@ Computes per-epoch band power and PSD features that can be:
   - Visualised in exploration.ipynb to build intuition
 
 Standard EEG frequency bands:
-  Delta  0.5 – 4  Hz  (dominant in deep sleep N3)
-  Theta  4   – 8  Hz  (N1, drowsiness)
-  Alpha  8   – 13 Hz  (relaxed wakefulness)
-  Sigma  12  – 15 Hz  (sleep spindles, N2)
-  Beta   15  – 30 Hz  (active wakefulness)
+  Delta  0.5 - 4  Hz  (dominant in deep sleep N3)
+  Theta  4   - 8  Hz  (N1, drowsiness)
+  Alpha  8   - 13 Hz  (relaxed wakefulness)
+  Sigma  12  - 15 Hz  (sleep spindles, N2)
+  Beta   15  - 30 Hz  (active wakefulness)
 """
 
 from typing import NamedTuple
