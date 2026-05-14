@@ -89,55 +89,72 @@ def plot_hypnogram(
     log.info(f"Hypnogram saved → {out_path}")
 
 
-def evaluate(cfg: dict) -> None:
-    from src.data.dataset import make_dataloaders
-    from src.models.cnn import SleepCNN
-
+def evaluate(cfg):
     device = get_device()
     out_dir = Path(cfg["training"]["checkpoint_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    # --- Load model ---
-    model = SleepCNN(
-        n_classes=cfg["model"]["n_classes"],
-        dropout=0.0,   # disable dropout at eval time
-    ).to(device)
     ckpt = out_dir / "best_model.pt"
+
+    model_name = cfg["model"].get("name", "SleepCNN")
+    is_transformer = model_name == "SleepTransformer"
+
+    if is_transformer:
+        from src.data.sequence_dataset import make_sequence_dataloaders
+        from src.models.transformer import SleepTransformer
+        model = SleepTransformer(
+            d_model=cfg["model"]["d_model"],
+            n_heads=cfg["model"]["n_heads"],
+            n_layers=cfg["model"]["n_layers"],
+            d_ff=cfg["model"]["d_ff"],
+            dropout=0.0,
+            n_classes=cfg["model"]["n_classes"],
+        ).to(device)
+        loaders = make_sequence_dataloaders(
+            cfg["data"]["processed_dir"],
+            batch_size=cfg["training"]["batch_size"],
+            seq_len=cfg["model"]["seq_len"],
+            num_workers=cfg["training"].get("num_workers", 4),
+        )
+    else:
+        from src.data.dataset import make_dataloaders
+        from src.models.cnn import SleepCNN
+        model = SleepCNN(
+            n_classes=cfg["model"]["n_classes"],
+            dropout=0.0,
+        ).to(device)
+        loaders = make_dataloaders(
+            cfg["data"]["processed_dir"],
+            batch_size=cfg["training"]["batch_size"],
+            num_workers=cfg["training"].get("num_workers", 4),
+        )
+
     model.load_state_dict(torch.load(ckpt, map_location=device, weights_only=True))
     model.eval()
-    log.info(f"Loaded checkpoint: {ckpt}")
-
-    # --- Test loader ---
-    loaders = make_dataloaders(
-        cfg["data"]["processed_dir"],
-        batch_size=cfg["training"]["batch_size"],
-        num_workers=cfg["training"].get("num_workers", 4),
-    )
-    test_loader = loaders["test"]
 
     all_preds, all_labels = [], []
     with torch.no_grad():
-        for X, y in test_loader:
+        for X, y in loaders["test"]:
             X = X.to(device)
-            preds = model(X).argmax(1).cpu()
+            logits = model(X)
+            if is_transformer:
+                preds = logits.view(-1, logits.size(-1)).argmax(1).cpu()
+                all_labels.extend(y.view(-1).tolist())
+            else:
+                preds = logits.argmax(1).cpu()
+                all_labels.extend(y.tolist())
             all_preds.extend(preds.tolist())
-            all_labels.extend(y.tolist())
 
     y_true = np.array(all_labels)
     y_pred = np.array(all_preds)
 
-    # Report
     report = classification_report(y_true, y_pred, target_names=LABEL_NAMES, zero_division=0)
-    print("\n" + "=" * 50)
+    print("\\n" + "=" * 50)
     print("Classification Report — Test Set")
     print("=" * 50)
     print(report)
 
-    # Confusion matrix
     cm = confusion_matrix(y_true, y_pred)
     plot_confusion_matrix(cm, out_dir / "confusion_matrix.png")
-
-    # Hypnogram
     plot_hypnogram(y_true, y_pred, out_dir / "hypnogram.png")
 
 
