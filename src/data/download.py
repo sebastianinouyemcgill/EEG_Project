@@ -3,6 +3,8 @@ Download Sleep-EDF Cassette recordings from PhysioNet via braindecode.
 Usage: python -m src.data.download --n_subjects 20 --data_dir data/raw
 """
 
+from braindecode.datasets import SleepPhysionet
+import mne
 import argparse
 import logging
 from pathlib import Path
@@ -26,12 +28,12 @@ def download_sleep_edf(data_dir: str | Path, n_subjects: int = 20) -> None:
     subject_ids = list(range(n_subjects))
     log.info(f"Downloading {n_subjects} subjects to {data_dir} ...")
 
-    # braindecode downloads to a cache dir; we record what was fetched
+    mne.set_config("MNE_DATA", str(data_dir.resolve()))
+
     dataset = SleepPhysionet(
         subject_ids=subject_ids,
-        recording_ids=[1],          # night 1 only — keeps things balanced
-        crop_wake_mins=30,           # trim excessive wake at start/end
-        path=str(data_dir),
+        recording_ids=[1],
+        crop_wake_mins=30,
     )
 
     log.info(f"Downloaded {len(dataset.datasets)} recordings.")

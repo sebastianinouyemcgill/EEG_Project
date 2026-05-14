@@ -71,7 +71,7 @@ def band_power_from_psd(
 
     for i, (lo, hi) in enumerate(BANDS.values()):
         mask = (freqs >= lo) & (freqs <= hi)
-        abs_power[:, i] = np.trapz(psd[:, mask], freqs[mask], axis=1)
+        abs_power[:, i] = np.trapezoid(psd[:, mask], freqs[mask], axis=1)
 
     total = abs_power.sum(axis=1, keepdims=True) + 1e-10
     rel_power = abs_power / total

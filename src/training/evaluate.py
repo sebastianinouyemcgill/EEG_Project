@@ -103,7 +103,7 @@ def evaluate(cfg: dict) -> None:
         dropout=0.0,   # disable dropout at eval time
     ).to(device)
     ckpt = out_dir / "best_model.pt"
-    model.load_state_dict(torch.load(ckpt, map_location=device))
+    model.load_state_dict(torch.load(ckpt, map_location=device, weights_only=True))
     model.eval()
     log.info(f"Loaded checkpoint: {ckpt}")
 

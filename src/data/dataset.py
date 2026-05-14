@@ -110,6 +110,6 @@ def make_dataloaders(
             batch_size=batch_size,
             shuffle=(split == "train"),
             num_workers=num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )
     return loaders
